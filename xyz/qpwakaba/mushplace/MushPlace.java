@@ -21,7 +21,7 @@ public class MushPlace extends JavaPlugin implements Listener {
 		if(!this.isEnabled()) return;
 		this.getServer().getConsoleSender().sendMessage("[MushPlace] " + ChatColor.AQUA + "作物のランダムドロップのあたりをいじっているので挙動がおかしくなっている可能性があります。");
 		this.getServer().getConsoleSender().sendMessage("[MushPlace] " + ChatColor.AQUA + "もし、何か気づいた場合はKingさんに教えてやってください。");
-		this.getServer().getConsoleSender().sendMessage("[MushPlace] " + ChatColor.AQUA + "詳しくは " + ChatColor.GOLD + "readme.txt" + ChatColor.AQUA + "を読んでください。");
+		this.getServer().getConsoleSender().sendMessage("[MushPlace] " + ChatColor.AQUA + "詳しくは " + ChatColor.RED + "readme.txt" + ChatColor.AQUA + "を読んでください。");
 		
 		this.canPlaceItemsInit();
 		this.itemToBlockInit();
