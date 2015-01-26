@@ -6,6 +6,6 @@ if %ERRORLEVEL% neq 0 cd /d %nowDir% & goto ENDOFBATCH
 cd /d %nowDir%
 cls
 echo classƒtƒ@ƒCƒ‹‰»‚É‚Í¬Œ÷
-jar -cvf %outputFile% .\xyz\ plugin.yml history.txt || pause
+jar -cvf %outputFile% .\xyz\ plugin.yml || pause
 
 :ENDOFBATCH

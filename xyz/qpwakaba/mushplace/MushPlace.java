@@ -46,7 +46,7 @@ public class MushPlace extends JavaPlugin implements Listener {
 		Field pumpkinField = getField(Block, "PUMPKIN_STEM");
 		Field melonField = getField(Block, "MELON_STEM");
 		Field saplingField = getField(Block, "SAPLING");
-		Field cactusField = getField(Block, "CUCTUS");
+		Field cactusField = getField(Block, "CACTUS");
 		Field caneField = getField(Block, "SUGAR_CANE_BLOCK");
 		Field lilyField = getField(Block, "WATER_LILY");
 		if(cropField != null) {
@@ -129,6 +129,7 @@ public class MushPlace extends JavaPlugin implements Listener {
 		                                  Material.MELON_STEM, 
 		                                  Material.VINE, 
 		                                  Material.WATER_LILY, 
+		                                  Material.NETHER_WARTS, 
 		                                  Material.COCOA, 
 		                                  Material.TRIPWIRE_HOOK, 
 		                                  Material.FLOWER_POT, 
