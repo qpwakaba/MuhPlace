@@ -10,12 +10,15 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.block.*;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.material.Torch;
+import org.bukkit.metadata.*;
 
 public class MushPlace extends JavaPlugin implements Listener {
 	
 	private List<Material> canPlaceItems;
 	private Map<Material, Material> itemToBlock;
 	private Map<Material, Byte> itemToBlockDamage;
+	
 	public void onEnable() {
 		this.cropInit();
 		if(!this.isEnabled()) return;
@@ -32,16 +35,18 @@ public class MushPlace extends JavaPlugin implements Listener {
 	}
 	
 	private void cropInit() {
-		Class Block = getClass(getMinecraftPackageName() + ".Block");
+		Class Block = getClass(getNMSPackageName() + ".Block");
+		Class BlockLongGrass = getClass(getNMSPackageName() + ".BlockLongGrass");
 		Field tickingFlag;
-		Object cropObject, pumpkinObject, melonObject, saplingObject, cactusObject, caneObject, lilyObject;
-		if(Block == null || getClass(getMinecraftPackageName() + ".BlockCrops") == null) {
+		Object cropObject, pumpkinObject, melonObject, saplingObject, cactusObject, caneObject, lilyObject, torchObject, rstorchObject, rstorch2Object, grassObject;
+		if(Block == null || getClass(getNMSPackageName() + ".BlockCrops") == null) {
 			this.getServer().getConsoleSender().sendMessage(ChatColor.RED + "致命的なエラー: お使いのバージョンには対応していません。Kingさんに要望を送ってください。");
 			this.setEnabled(false);
 			return;
 		}
 
 		//1.6用の処理
+		Field grassField = getField(Block, "LONG_GRASS");
 		Field cropField = getField(Block, "CROPS");
 		Field pumpkinField = getField(Block, "PUMPKIN_STEM");
 		Field melonField = getField(Block, "MELON_STEM");
@@ -49,6 +54,9 @@ public class MushPlace extends JavaPlugin implements Listener {
 		Field cactusField = getField(Block, "CACTUS");
 		Field caneField = getField(Block, "SUGAR_CANE_BLOCK");
 		Field lilyField = getField(Block, "WATER_LILY");
+		Field torchField = getField(Block, "TORCH");
+		Field rstorchField = getField(Block, "REDSTONE_TORCH_OFF");
+		Field rstorch2Field = getField(Block, "REDSTONE_TORCH_ON");
 		if(cropField != null) {
 			cropObject = getFieldValue(cropField, null);
 			pumpkinObject = getFieldValue(pumpkinField, null);
@@ -57,11 +65,15 @@ public class MushPlace extends JavaPlugin implements Listener {
 			cactusObject = getFieldValue(cactusField, null);
 			caneObject = getFieldValue(caneField, null);
 			lilyObject = getFieldValue(lilyField, null);
+			torchObject = getFieldValue(torchField, null);
+			rstorchObject = getFieldValue(rstorchField, null);
+			rstorch2Object = getFieldValue(rstorch2Field, null);
+			grassObject = getFieldValue(grassField, null);
 			tickingFlag = getField(Block, "cK");//1.6用
 		} else { //1.7～1.8用の処理
 			Field regField = getField(Block, "REGISTRY");
 			if(regField != null) { 
-				Class regClass = getClass(getMinecraftPackageName() + ".RegistryMaterials");
+				Class regClass = getClass(getNMSPackageName() + ".RegistryMaterials");
 				Object reg = getFieldValue(regField, null);
 				
 				if(reg == null) {
@@ -87,6 +99,11 @@ public class MushPlace extends JavaPlugin implements Listener {
 				cactusObject = invokeMethod(getMethod, reg, "cuctus");
 				caneObject = invokeMethod(getMethod, reg, "reeds");
 				lilyObject = invokeMethod(getMethod, reg, "waterlily");
+				//トーチ系の処理
+				torchObject = invokeMethod(getMethod, reg, "torch");
+				rstorchObject = invokeMethod(getMethod, reg, "lit_redstone_ore");
+				rstorch2Object = invokeMethod(getMethod, reg, "unlit_redstone_ore");
+				grassObject = invokeMethod(getMethod, reg, "tallgrass");
 				tickingFlag = getField(Block, "z");
 			} else {
 				this.getServer().getConsoleSender().sendMessage(ChatColor.RED + "致命的なエラー: お使いのバージョンには対応していません。Kingさんに要望を送ってください。");
@@ -108,6 +125,10 @@ public class MushPlace extends JavaPlugin implements Listener {
 		setFieldValue(tickingFlag, cactusObject, false);
 		setFieldValue(tickingFlag, caneObject, false);
 		setFieldValue(tickingFlag, lilyObject, false);
+		setFieldValue(tickingFlag, torchObject, false);
+		setFieldValue(tickingFlag, rstorchObject, false);
+		setFieldValue(tickingFlag, rstorch2Object, false);
+		setFieldValue(tickingFlag, grassObject, false);
 		
 	}
 	
@@ -121,7 +142,10 @@ public class MushPlace extends JavaPlugin implements Listener {
 		                                  Material.RED_ROSE, 
 		                                  Material.BROWN_MUSHROOM, 
 		                                  Material.RED_MUSHROOM, 
+		                                  Material.TORCH, 
 		                                  Material.CROPS, 
+		                                  Material.REDSTONE_TORCH_OFF, 
+		                                  Material.REDSTONE_TORCH_ON, 
 		                                  Material.STONE_BUTTON, 
 		                                  Material.CACTUS, 
 		                                  Material.SUGAR_CANE_BLOCK, 
@@ -191,7 +215,7 @@ public class MushPlace extends JavaPlugin implements Listener {
 			for(int i = 2; !target.isEmpty() && i <= blocks.size(); i++) {
 				target = blocks.get(blocks.size() - i);
 			}
-			target.setType(getBlockByItem(type));//アイテムをブロックに変換
+			target.setTypeId(getBlockByItem(type).getId(), false);//アイテムをブロックに変換
 			byte data = getDataByItem(type);
 			//アイテムにブロックの時のダメージ値が決まってたらそっちにする。
 			//そうじゃなければ持ってる奴のダメージ値使う。
@@ -204,17 +228,18 @@ public class MushPlace extends JavaPlugin implements Listener {
 	
 	@EventHandler
 	public void onBlockPhysics(BlockPhysicsEvent event) {
-		if(canPlaceItems.contains(event.getBlock().getType())) {
+		Block b = event.getBlock();
+		if(canPlaceItems.contains(b.getType())) {
+			switch(b.getType()) {
+				case REDSTONE_TORCH_OFF:
+				case REDSTONE_TORCH_ON:
+					if(b.getRelative(((Torch)b.getState().getData()).getAttachedFace()).getType().isOccluding()) return;
+					//固形ブロックだったらキャンセルの必要がないのでリターンする
+			}
 			event.setCancelled(true);
 		}
 	}
 	
-	@EventHandler
-	public void onBlockGrow(BlockGrowEvent event) {
-		this.getLogger().info(event.getEventName());
-		this.getLogger().info(event.getBlock().getLocation().toString());
-		this.getLogger().info(event.getNewState().toString());
-	}
 	private Material getBlockByItem(Material item) {
 		return (itemToBlock.containsKey(item) ? itemToBlock.get(item) : item);
 	}
@@ -222,14 +247,11 @@ public class MushPlace extends JavaPlugin implements Listener {
 	private byte getDataByItem(Material item) {
 		return (itemToBlockDamage.containsKey(item) ? itemToBlockDamage.get(item).byteValue() : 0);
 	}
-	private String getMinecraftPackageName() {
-		for (Package pack: Package.getPackages()) {
-			if(pack.getName().startsWith("net.minecraft.server.v")) {
-				String[] packs = pack.getName().split("\\.");
-				return packs[0] + "." + packs[1] + "." + packs[2] + "." + packs[3];
-			}
-		}
-		return null;
+	private String getNMSPackageName() {
+		return getOBCPackageName().replace("org.bukkit.craftbukkit", "net.minecraft.server");
+	}
+	public static String getOBCPackageName() {
+		return Bukkit.getServer().getClass().getPackage().getName();
 	}
 	
 	private Class getClass(String name) {
