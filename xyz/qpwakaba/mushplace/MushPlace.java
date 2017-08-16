@@ -28,7 +28,7 @@ public class MushPlace extends JavaPlugin implements Listener {
     static {
         Method temp = getMethod(blockClass, "getById", int.class);
         if(temp == null) {
-            temp = getMethod(blockClass, "e", int.class)
+            temp = getMethod(blockClass, "e", int.class);
         }
         getBlockByIdMethod = temp;
     }
