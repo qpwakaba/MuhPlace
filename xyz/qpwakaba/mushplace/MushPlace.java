@@ -232,7 +232,7 @@ public class MushPlace extends JavaPlugin implements Listener {
             event.setUseInteractedBlock(org.bukkit.event.Event.Result.ALLOW);
             
             //‰¹–Â‚ç‚·
-            Location location = event.getClickedBlock().getLocation();
+            //Location location = event.getClickedBlock().getLocation();
             //String soundName = Block.stepSound.getPlaceSound();
             //float volume1 = Block.stepSound.getVolume1();
             //float volume2 = Block.stepSound.getVolume2();
