@@ -23,8 +23,15 @@ public class MushPlace extends JavaPlugin implements Listener {
     private Map<Material, Byte> itemToBlockDamage;
     private static final Class blockClass = getClass(getNMSPackageName() + ".Block");
     private Field tickingFlagField;
-    private static final Method getBlockByIdMethod = getMethod(blockClass, "getById", int.class);
+    private static final Method getBlockByIdMethod;
     private static final Field blockByIdField = getField(blockClass, "byId");
+    static {
+        Method temp = getMethod(blockClass, "getById", int.class);
+        if(temp == null) {
+            temp = getMethod(blockClass, "e", int.class)
+        }
+        getBlockByIdMethod = temp;
+    }
     public void onEnable() {
         if(!this.isEnabled()) return;
         this.getServer().getConsoleSender().sendMessage("[MushPlace] " + ChatColor.AQUA + "作物のランダムドロップのあたりをいじっているので挙動がおかしくなっている可能性があります。");
