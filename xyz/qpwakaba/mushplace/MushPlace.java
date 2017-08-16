@@ -189,7 +189,7 @@ public class MushPlace extends JavaPlugin implements Listener {
         this.itemToBlockDamage = new HashMap<>();
         this.itemToBlockDamage.put(Material.WHEAT, (byte)7);
     }
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         switch(event.getAction()) {
             case RIGHT_CLICK_BLOCK:
