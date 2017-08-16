@@ -18,6 +18,7 @@ import org.bukkit.metadata.*;
 public class MushPlace extends JavaPlugin implements Listener {
     
     private List<Material> canPlaceItems;
+    private List<Material> canPlaceToFlowerPotItems;
     private Map<Material, Material> itemToBlock;
     private Map<Material, Byte> itemToBlockDamage;
     private static final Class blockClass = getClass(getNMSPackageName() + ".Block");
@@ -52,6 +53,9 @@ public class MushPlace extends JavaPlugin implements Listener {
                     tickingFlagField = getField(blockClass, "z");
                     break;
                 case 9:
+                case 10:
+                case 11:
+                default:
                     //1.9
                     tickingFlagField = getField(blockClass, "t");
             }
@@ -87,6 +91,7 @@ public class MushPlace extends JavaPlugin implements Listener {
     
     private void canPlaceItemsInit() {
         this.canPlaceItems = new ArrayList<>();
+        this.canPlaceToFlowerPotItems = new ArrayList<>();
         Material[] temp = new Material[] {
                                           Material.SAPLING, 
                                           Material.LONG_GRASS, 
@@ -127,6 +132,16 @@ public class MushPlace extends JavaPlugin implements Listener {
                                           Material.GOLD_PLATE, 
         };
         canPlaceItems.addAll(Arrays.asList(temp));
+        temp = new Material[] {
+                                          Material.SAPLING, 
+                                          Material.DEAD_BUSH, 
+                                          Material.YELLOW_FLOWER, 
+                                          Material.RED_ROSE, 
+                                          Material.BROWN_MUSHROOM, 
+                                          Material.RED_MUSHROOM, 
+                                          Material.CACTUS, 
+        };
+        this.canPlaceToFlowerPotItems.addAll(Arrays.asList(temp));
         if(getNMSMinorVersion() >= 8) {
             Material[] temp_after1_8 = new Material[] {
                                           Material.ACACIA_DOOR, 
@@ -167,7 +182,7 @@ public class MushPlace extends JavaPlugin implements Listener {
         this.itemToBlockDamage = new HashMap<>();
         this.itemToBlockDamage.put(Material.WHEAT, (byte)7);
     }
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event) {
         switch(event.getAction()) {
             case RIGHT_CLICK_BLOCK:
@@ -183,9 +198,13 @@ public class MushPlace extends JavaPlugin implements Listener {
         //this.getLogger().info("useInteractedBlock() == " + event.useInteractedBlock());
         //this.getLogger().info("useItemInHand() == " + event.useItemInHand());
         //if(event.useItemInHand() == org.bukkit.event.Event.Result.ALLOW) return;
-        ItemStack itemStack = event.getPlayer().getItemInHand();
+        ItemStack itemStack = event.getItem();
         Material type = itemStack.getType();
         Block target;
+        if(event.hasBlock() && event.getClickedBlock().getType() == Material.FLOWER_POT && this.canPlaceToFlowerPotItems.contains(type)) {
+            //植木鉢にセットするため、キャンセルせずに抜ける
+            return;
+        }
         if(canPlaceItems.contains(getBlockByItemStack(itemStack))) {
             if(event.getAction() == org.bukkit.event.block.Action.RIGHT_CLICK_AIR) {
                 List<Block> blocks = event.getPlayer().getLineOfSight((HashSet<Byte>)null, 5);
@@ -218,7 +237,7 @@ public class MushPlace extends JavaPlugin implements Listener {
         }
     }
     
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onBlockPhysics(BlockPhysicsEvent event) {
         Block b = event.getBlock();
         if(canPlaceItems.contains(b.getType()) || (this.itemToBlock.containsKey(b.getType()) ? canPlaceItems.contains(this.itemToBlock.get(b.getType())) : false)) {
@@ -252,6 +271,7 @@ public class MushPlace extends JavaPlugin implements Listener {
     
     private String getPlaceSoundName(Material block) {
         //Object block = //Block.getById(block.getId());
+        return null;
     }
     
     private final String PREFIX_LOTMETA = "LotMeta:";
@@ -287,6 +307,8 @@ public class MushPlace extends JavaPlugin implements Listener {
     public static final String PREFIX_NMS_VERSION_7 = "v1_7_R";
     public static final String PREFIX_NMS_VERSION_8 = "v1_8_R";
     public static final String PREFIX_NMS_VERSION_9 = "v1_9_R";
+    public static final String PREFIX_NMS_VERSION_10 = "v1_10_R";
+    public static final String PREFIX_NMS_VERSION_11 = "v1_11_R";
     private static final String REGEX_NMS_VERSION = "v(\\d+)_(\\d+)_R(\\d+)";
     private static final Matcher REGEX_NMS_VERSION_MATCHER = Pattern.compile(REGEX_NMS_VERSION).matcher(getNMSVersion());
     static {
